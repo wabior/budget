@@ -1,0 +1,44 @@
+<conversation_summary>
+<decisions>
+1. Użytkownik potwierdził relacje: Users (1:N) Expenses (1:N) Payments, gdzie każda płatność jest powiązana z expense_id i user_id  
+2. Zdecydowano o przechowywaniu dat: start_date, end_date, created_at, updated_at w tabeli Expenses  
+3. Cykliczność: liczba miesięcy (int 0-12), gdzie 0 = wydatek jednorazowy  
+4. Kwota może być ujemna, pozostałe ograniczenia mają być opracowane przez asystenta  
+5. Zatwierdzono indeksy: user_id w Expenses i Payments, indeks złożony (user_id, expense_id) w Payments  
+6. Potwierdzono użycie kluczy obcych w tabeli Payments  
+7. Partycjonowanie pominięte dla MVP  
+8. RLS minimum do MVP z Supabase Auth  
+9. Zdecydowano o użyciu ENUM dla status i type, z dodatkową wartością "one_time" dla wydatków jednorazowych  
+10. Zatwierdzono automatyczne aktualizacje timestampów  
+11. Dodano szczegółowe indeksy złożone: główny (user_id, expense_id, payment_month), dodatkowe (user_id, payment_month), (expense_id, payment_month), (user_id, expense_id)  
+12. Dyskutowano o zastosowaniu ograniczenia CHECK, aby zapewnić, że gdy expense_type jest 'one_time', wartość frequency wynosi 0 – przyjęto hybrydowe podejście z walidacją w kodzie oraz na poziomie bazy danych.
+</decisions>
+
+<matched_recommendations>
+1. Utworzenie trzech tabel: Users, Expenses, Payments z odpowiednimi kluczami głównymi i obcymi  
+2. Projekt tabeli Expenses z kolumnami: expense_id, user_id, name, amount, frequency, start_date, end_date, status, notes, type, created_at, updated_at  
+3. Projekt tabeli Payments z rekordami dla rat: payment_id, expense_id, user_id, payment_amount, paid_amount (domyślnie 0), payment_date, status, created_at, updated_at  
+4. Zastosowanie ograniczeń NOT NULL i CHECK dla walidacji danych, w tym ograniczenia CHECK dla expense_type 'one_time' by frequency = 0  
+5. Implementacja indeksów na user_id oraz indeksów złożonych dla optymalizacji zapytań  
+6. Użycie kluczy obcych dla integralności danych  
+7. Projekt polityk RLS opartych na user_id  
+8. Wykorzystanie ENUM dla kolumn status i type – zdefiniowane wartości: status ('active', 'completed', 'suspended') i type ('regular', 'one_time', 'installment', 'variable')  
+9. Implementacja automatycznych timestampów  
+10. Rozważenie przyszłego partycjonowania przy skalowaniu  
+11. Implementacja szczegółowych indeksów złożonych: główny (user_id, expense_id, payment_month) oraz dodatkowe indeksy dla różnych scenariuszy zapytań
+</matched_recommendations>
+
+<database_planning_summary>
+Na podstawie analizy PRD i dyskusji ustalono schemat bazy danych dla MVP Budżetu Domowego. Główne encje to Users, Expenses i Payments z relacjami 1:N. Tabela Expenses przechowuje informacje o wydatkach z polami: expense_id (PK), user_id (FK), name, amount (może być ujemna), frequency (0-12 miesięcy), start_date, end_date, status (ENUM), notes, type (ENUM), created_at, updated_at. Tabela Payments zawiera rekordy płatności z payment_id (PK), expense_id (FK), user_id (FK), payment_amount, paid_amount (domyślnie 0), payment_date, status, created_at, updated_at.
+
+Kluczowe decyzje architektoniczne: raty to osobne rekordy w tabeli Payments z tym samym expense_id, indeksy na user_id w obu tabelach oraz indeks złożony (user_id, expense_id) w Payments dla optymalizacji zapytań miesięcznych. Bezpieczeństwo zapewnione przez RLS oparte na user_id z Supabase Auth. Zastosowano ENUM dla status oraz type (z wartościami: 'regular', 'one_time', 'installment', 'variable'), automatyczne timestampy oraz klucze obce dla integralności danych. Partycjonowanie pominięte dla MVP, ale rozważane w przyszłości.
+
+Dodatkowo, przyjęto zastosowanie ograniczenia CHECK (w połączeniu z walidacją w kodzie), które zapewnia, że jeżeli `expense_type` wynosi 'one_time', to wartość w kolumnie `frequency` musi wynosić 0. Wdrożenie hybrydowe zwiększa niezawodność danych.
+</database_planning_summary>
+
+<unresolved_issues>
+1. Brak szczegółowych ograniczeń CHECK dla innych kolumn, np. dla amount czy frequency poza przypadkiem 'one_time' – wymaga dalszego dopracowania  
+2. Brak szczegółów implementacji automatycznych timestampów (triggery vs domyślne wartości)  
+3. Brak szczegółów polityk RLS poza podstawowym user_id matching  
+</unresolved_issues>
+</conversation_summary>
