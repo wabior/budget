@@ -63,6 +63,55 @@ Zarządzanie budżetem domowym w Excelu jest angażujące i podatne na błędy. 
   - Obliczanie całkowitej kwoty na podstawie liczby rat i kwoty raty
   - Data zakończenia (opcjonalna dla długoterminowych zobowiązań)
 
+### Automatyczne generowanie płatności
+
+#### Zasady generowania płatności przy tworzeniu wydatku
+
+**Wydatki jednorazowe (type = "one_time", frequency = 0)**:
+- System generuje **jedną płatność** na datę `start_date`
+- Płatność ma status "unpaid"
+
+**Wydatki cykliczne bez daty końcowej (type = "regular", "variable", brak `end_date`)**:
+- System generuje **jedną płatność** na datę `start_date`
+- Kolejne płatności są generowane przez funkcję "Nowy miesiąc"
+- Przykład: Netflix od 2025-10-01 → generuje tylko płatność na 2025-10-01
+
+**Wydatki cykliczne z datą końcową (type = "regular", "variable", z `end_date`)**:
+- System generuje **wszystkie płatności** od `start_date` do `end_date` zgodnie z `frequency`
+- Przykład: Prąd od 2025-10-01 do 2025-12-31, frequency=1 → generuje 3 płatności
+
+**Wydatki ratalne (type = "installment")**:
+- System generuje **wszystkie znane raty** bez względu na okres
+- Płatności są generowane co miesiąc od `start_date`
+- Liczba płatności zależy od liczby rat określonej przez użytkownika
+- Przykład: Kredyt 24 raty → generuje 24 płatności z góry
+
+#### Funkcja "Nowy miesiąc"
+
+Funkcja "Nowy miesiąc" działa następująco:
+- Przegląda wszystkie **aktywne wydatki** cykliczne (regular, variable, installment)
+- **Jeśli wydatek nie ma płatności** na nowy miesiąc → tworzy nową płatność
+- **Jeśli wydatek ma już płatność** na nowy miesiąc → pomija
+- Stosuje regułę `frequency` do określenia, czy wydatek powinien mieć płatność w danym miesiącu
+
+Przykład dla Netflix (frequency=1, brak end_date):
+1. Tworzenie wydatku 2025-10-01 → 1 płatność (październik)
+2. "Nowy miesiąc" listopad → dodaje płatność na listopad
+3. "Nowy miesiąc" grudzień → dodaje płatność na grudzień
+4. "Nowy miesiąc" styczeń 2026 → dodaje płatność na styczeń
+
+#### Struktura danych płatności
+
+Każda płatność zawiera:
+- `payment_id` - unikalny identyfikator
+- `expense_id` - powiązanie z wydatkiem
+- `user_id` - właściciel płatności
+- `payment_amount` - kwota do zapłaty
+- `paid_amount` - faktycznie zapłacona kwota (domyślnie 0)
+- `payment_date` - data płatności (YYYY-MM-DD)
+- `payment_month` - pierwszy dzień miesiąca płatności (YYYY-MM-DD)
+- `status` - "unpaid" lub "paid"
+
 ### System kont użytkowników
 - Prosty system uwierzytelniania
 - Pełna izolacja kont użytkowników
@@ -157,32 +206,37 @@ Zarządzanie budżetem domowym w Excelu jest angażujące i podatne na błędy. 
 - Użytkownik może otworzyć modal dodawania wydatku
 - Użytkownik może wprowadzić nazwę wydatku (wymagane)
 - Użytkownik może wprowadzić cenę wydatku (wymagane, bazowa dla zmiennych)
-- Użytkownik może określić cykliczność (1-12 miesięcy, gdzie 1=co miesiąc, 12=co rok)
+- Użytkownik może określić cykliczność (0-12 miesięcy, gdzie 0=jednorazowo, 1=co miesiąc, 12=co rok)
 - Użytkownik może ustawić datę rozpoczęcia
 - Użytkownik może ustawić datę końcową (opcjonalnie)
-- Użytkownik może wybrać typ wydatku (zwykły, ratalny, zmienny)
+- Użytkownik może wybrać typ wydatku (zwykły, ratalny, zmienny, jednorazowy)
 - Wydatek zmienny: cena zależy od zużycia, ale cykliczność jest stała
 - Użytkownik może dodać notatki (opcjonalnie)
 - System waliduje wszystkie wymagane pola
 - Wydatek jest zapisywany w tabeli wydatków i przypisany do użytkownika
-- System automatycznie tworzy wpisy w tabeli płatności dla nowego wydatku
+- **System automatycznie generuje płatności według następujących zasad**:
+  - **Jednorazowy (one_time)**: 1 płatność na `start_date`
+  - **Cykliczny bez end_date (regular/variable)**: 1 płatność na `start_date`, kolejne przez "Nowy miesiąc"
+  - **Cykliczny z end_date (regular/variable)**: wszystkie płatności od `start_date` do `end_date`
+  - **Ratalny (installment)**: wszystkie raty określone przez użytkownika
 
 ### US-003: Dodawanie wydatku ratalnego
-**Tytuł**: Użytkownik może dodać wydatek ratalny z automatycznym generowaniem przyszłych płatności
+**Tytuł**: Użytkownik może dodać wydatek ratalny z automatycznym generowaniem wszystkich rat
 
-**Opis**: Jako użytkownik chcę móc dodać wydatek ratalny, aby system automatycznie wygenerował wszystkie przyszłe płatności.
+**Opis**: Jako użytkownik chcę móc dodać wydatek ratalny, aby system automatycznie wygenerował wszystkie przyszłe płatności z góry.
 
 **Kryteria akceptacji**:
 - Użytkownik może oznaczyć wydatek jako ratalny podczas dodawania
-- Użytkownik może podać datę początkową pierwszej płatności (miesiąc)
+- Użytkownik może podać datę początkową pierwszej płatności (`start_date`)
 - Użytkownik może określić liczbę rat (dowolna, może przekraczać 12 miesięcy)
 - Użytkownik może podać kwotę pojedynczej raty
 - System automatycznie oblicza całkowitą kwotę wydatku (liczba rat × kwota raty)
-- System automatycznie generuje wszystkie przyszłe płatności jako niezapłacone
-- System automatycznie oblicza datę ostatniej płatności (opcjonalna dla długoterminowych zobowiązań)
+- **System automatycznie generuje WSZYSTKIE płatności (raty) z góry** jako niezapłacone
+- Płatności są generowane co miesiąc od `start_date` bez względu na okres
+- System automatycznie oblicza datę ostatniej płatności na podstawie liczby rat
 - Każda płatność ma przypisany miesiąc płatności (co miesiąc od daty początkowej)
 - Wydatek ratalny jest traktowany jako jeden wydatek z wieloma płatnościami w tabeli płatności
-- System tworzy wpisy w wspólnej tabeli płatności dla wydatku ratalnego
+- Przykład: Kredyt 24 raty od 2025-01-01 → system generuje 24 płatności (styczeń 2025 - grudzień 2026)
 
 ### US-004: Zarządzanie listą wydatków
 **Tytuł**: Użytkownik może przeglądać i zarządzać listą wszystkich swoich wydatków
@@ -257,8 +311,9 @@ Zarządzanie budżetem domowym w Excelu jest angażujące i podatne na błędy. 
 - **Generowanie kolejnych miesięcy**:
   - Użytkownik może kliknąć [Nowy miesiąc]
   - System tworzy nowy miesiąc (+1 miesiąc od ostatniego istniejącego)
-  - System generuje listę wydatków na nowy miesiąc
-  - Dla wydatków ratalnych: automatycznie tworzy kolejne raty
+  - System przegląda wszystkie aktywne wydatki cykliczne
+  - **Dla wydatków bez płatności na nowy miesiąc**: system tworzy nową płatność (zgodnie z `frequency`)
+  - **Dla wydatków z istniejącymi płatnościami**: system pomija (np. raty już wygenerowane)
   - AI analizuje historię płatności i proponuje korekty dla nadpłat/niedopłat
   - Lista zawiera wszystkie wydatki z datą rozpoczęcia i trwania w nowym miesiącu
   - Każdy wydatek ma edytowalne pole płatności
