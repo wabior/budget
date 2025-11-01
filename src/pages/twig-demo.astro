@@ -1,0 +1,27 @@
+---
+import Layout from "../layouts/Layout.astro";
+import { renderTwig } from "../lib/twig";
+
+const twigHtml = await renderTwig("demo", {
+  title: "Budżet Domowy – przykład Twig",
+  description: "Ten widok jest renderowany przy użyciu szablonu Twig uruchomionego w środowisku Node.js.",
+  highlights: [
+    "Brak zależności od Reacta",
+    "Szablony definiowane w katalogu src/views",
+    "Możliwość wykorzystania Twig także w projektach Node",
+  ],
+});
+---
+
+<Layout title="Budżet Domowy – Twig demo">
+  <section class="mx-auto flex min-h-screen max-w-3xl flex-col gap-6 p-8">
+    <h2 class="text-3xl font-semibold text-white">Przykład integracji z Twig</h2>
+    <p class="text-base text-white/70">
+      Renderowanie odbywa się po stronie serwera za pomocą helpera <code>renderTwig</code>, który ładuje plik
+      <code>src/views/demo.twig</code> i przekazuje do niego dane kontekstowe.
+    </p>
+    <article class="rounded-xl border border-white/10 bg-white/5 p-6 shadow-xl">
+      <div set:html={twigHtml} />
+    </article>
+  </section>
+</Layout>

@@ -1,12 +1,12 @@
-# 10x Astro Starter
+# Budżet Domowy MVP
 
-A modern, opinionated starter template for building fast, accessible, and AI-friendly web applications.
+Aplikacja webowa do zarządzania budżetem domowym z naciskiem na automatyczne generowanie listy wydatków na kolejny miesiąc.
 
 ## Tech Stack
 
-- [Astro](https://astro.build/) v5.5.5 - Modern web framework for building fast, content-focused websites
-- [React](https://react.dev/) v19.0.0 - UI library for building interactive components
-- [TypeScript](https://www.typescriptlang.org/) v5 - Type-safe JavaScript
+- [Astro](https://astro.build/) v5.7 - Framework do budowy szybkich aplikacji SSR/SSG
+- [Twig JS](https://github.com/twigjs/twig.js) v1.17 - Silnik szablonów renderowany w Node.js
+- [TypeScript](https://www.typescriptlang.org/) v5 - Statyczne typowanie kodu
 - [Tailwind CSS](https://tailwindcss.com/) v4.0.17 - Utility-first CSS framework
 
 ## Prerequisites
@@ -54,36 +54,18 @@ npm run build
 ```md
 .
 ├── src/
-│   ├── layouts/    # Astro layouts
-│   ├── pages/      # Astro pages
-│   │   └── api/    # API endpoints
-│   ├── components/ # UI components (Astro & React)
-│   └── assets/     # Static assets
-├── public/         # Public assets
+│   ├── layouts/    # Layouty Astro
+│   ├── pages/      # Strony Astro i endpointy API
+│   │   └── api/    # Punkty końcowe API
+│   ├── components/ # Komponenty Astro
+│   ├── views/      # Szablony Twig
+│   └── assets/     # Statyczne zasoby
+├── public/         # Publiczne zasoby
 ```
 
 ## AI Development Support
 
-This project is configured with AI development tools to enhance the development experience, providing guidelines for:
-
-- Project structure
-- Coding practices
-- Frontend development
-- Styling with Tailwind
-- Accessibility best practices
-- Astro and React guidelines
-
-### Cursor IDE
-
-The project includes AI rules in `.cursor/rules/` directory that help Cursor IDE understand the project structure and provide better code suggestions.
-
-### GitHub Copilot
-
-AI instructions for GitHub Copilot are available in `.github/copilot-instructions.md`
-
-### Windsurf
-
-The `.windsurfrules` file contains AI configuration for Windsurf.
+Projekt zawiera zestaw reguł AI w katalogu `.cursor/rules/`, które opisują strukturę katalogów, najlepsze praktyki kodowania, integrację Astro z Tailwind CSS oraz podstawy pracy z Twigiem.
 
 ## Contributing
 
